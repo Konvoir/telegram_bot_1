@@ -17,11 +17,26 @@ const gameOptions = {
     })
 }
 
+const againOptions = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{ text: 'Play again', callback_data: '/again' }],
+        ]
+    })
+}
+
+const startGame = async (chatId) => {
+            await bot.sendMessage(chatId, 'Guess a number from 0 to 9!')
+            const randomNumber = Math.floor(Math.random() * 10)
+            chats[chatId] = randomNumber;
+            await bot.sendMessage(chatId, 'Guess (Отгадывай)', gameOptions);
+}
+
 const start = () => {
     bot.setMyCommands([
-        { command: '/start', description: 'Начальное приветствие' },
-        { command: '/info', description: 'Получить Информацию о пользователе' },
-        { command: '/game', description: 'Игра угадай цифру'}    
+        { command: '/start', description: 'Initial greeting' },
+        { command: '/info', description: 'Get User Information' },
+        { command: '/game', description: 'Guess the number game'}    
     ])
 
     bot.on('message', async msg => {
@@ -35,27 +50,27 @@ const start = () => {
         }
 
         if (text === '/info') {
-        return bot.sendMessage(chatId, `Тебя зовут ${msg.from.first_name} ${msg.from.last_name}`)
+        return bot.sendMessage(chatId, `Your name is  ${msg.from.first_name} ${msg.from.last_name}`)
         }
 
         // Игра "угадай случайное число"
         if (text === '/game') {
-            await bot.sendMessage(chatId, 'Сейчас я загадаю цифру от 0 до 9, а ты попробуй угадать!')
-            const randomNumber = Math.floor(Math.random() * 10)
-            chats[chatId] = randomNumber;
-            return bot.sendMessage(chatId, 'Отгадывай', gameOptions);
+            return startGame(chatId);
         }
-        return bot.sendMessage(chatId, 'Я тебя не понимаю, попробуй еще раз!');
+        return bot.sendMessage(chatId, `I don't understand you, try again!`);
 
     })
 
     bot.on('callback_query', async msg => {
         const data = msg.data;
         const chatId = msg.message.chat.id;
+        if (data === '/again') {
+            return startGame(chatId);
+        }
         if (data === chats[chatId]) {
-            return await bot.sendMessage(chatId, `Поздравляю, ты отгадал цифру ${chats[chatId]}`)
+            return await bot.sendMessage(chatId, `Congratulations, you guessed the number ${chats[chatId]}`, againOptions)
         } else {
-            return await bot.sendMessage(chatId, `К сожалению ты не угадал, бот загадал цифру ${chats[chatId]}`)
+            return await bot.sendMessage(chatId, `you didn't guess, the bot guessed the number ${chats[chatId]}`, againOptions)
         }
         // bot.sendMessage(chatId, `Ты выбрал цифру ${data}`)
         // console.log(msg)
